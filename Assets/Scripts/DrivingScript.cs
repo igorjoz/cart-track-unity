@@ -40,8 +40,8 @@ public class DrivingScript : MonoBehaviour
 
             wheel.wheelCollider.GetWorldPose(out position, out quat);
 
-            wheel.wheel.transform.position = position;
-            wheel.wheel.transform.rotation = quat;
+            //wheel.wheel.transform.position = position;
+            //wheel.wheel.transform.rotation = quat;
         }
     }
 

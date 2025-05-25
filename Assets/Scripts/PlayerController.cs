@@ -11,12 +11,12 @@ public class PlayerController : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         float accelerator = Input.GetAxis("Vertical");
         float steer = Input.GetAxis("Horizontal");
         float brake = Input.GetAxis("Jump");
 
-        drivingScript.Drive(accelerator, steer, brake);
+        drivingScript.Drive(accelerator, brake, steer);
     }
 }
