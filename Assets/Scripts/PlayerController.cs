@@ -4,20 +4,19 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    DrivingScript driveScript;
+    DrivingScript drivingScript;
 
     void Start()
     {
-        driveScript = GetComponent<DrivingScript>();
+        drivingScript = GetComponent<DrivingScript>();
     }
 
     void Update()
     {
-        float accel = Input.GetAxis("Vertical");
+        float accelerator = Input.GetAxis("Vertical");
         float steer = Input.GetAxis("Horizontal");
         float brake = Input.GetAxis("Jump");
-        driveScript.Drive(accel, brake, steer);
-        ////
-        driveScript.EngineSound();
+
+        drivingScript.Drive(accelerator, brake, steer);
     }
 }
