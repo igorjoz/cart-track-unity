@@ -18,6 +18,20 @@ public class CheckpointController : MonoBehaviour
         if (other.gameObject.tag == "Checkpoint")
         {
             int thisCheckpoint = int.Parse(other.gameObject.name);
+
+            if (thisCheckpoint == nextCheckpoint)
+            {
+                //lastPoint = other.gameObject;
+                checkpoint = thisCheckpoint;
+                if (checkpoint == 0)
+                {
+                    lap++;
+                    Debug.Log("Lap: " + lap);
+                }
+                nextCheckpoint++;
+                nextCheckpoint = nextCheckpoint % checkpointCount;
+            }
+
         }
     }
 
