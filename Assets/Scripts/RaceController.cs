@@ -2,12 +2,14 @@ using System.ComponentModel;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class RaceController : MonoBehaviour
 {
     public int timer = 8;
     public static int totalLaps = 2;
     public static bool isRacing = false;
+    public GameObject endRacePanel;
 
     public TMP_Text startText;
     AudioSource audioSource;
@@ -26,7 +28,7 @@ public class RaceController : MonoBehaviour
             startText.text = timer.ToString();
             audioSource.PlayOneShot(countSound);
 
-            Debug.Log("Rozpoczêcie wyœcigu za: " + timer);
+            Debug.Log("Rozpoczï¿½cie wyï¿½cigu za: " + timer);
             timer--;
         }
         else
@@ -48,6 +50,8 @@ public class RaceController : MonoBehaviour
 
     void Start()
     {
+        endRacePanel.SetActive(false);
+
         audioSource = GetComponent<AudioSource>();
         startText.gameObject.SetActive(false);
 
@@ -66,7 +70,7 @@ public class RaceController : MonoBehaviour
     {
         int finishedLap = 0;
 
-        foreach(CheckpointController controller in carsControllers)
+        foreach (CheckpointController controller in carsControllers)
         {
             if (controller.lap == totalLaps + 1)
             {
@@ -75,9 +79,16 @@ public class RaceController : MonoBehaviour
 
             if (finishedLap == carsControllers.Length && isRacing)
             {
-                Debug.Log("Wyœcig skoñczony");
+                endRacePanel.SetActive(true);
+
+                Debug.Log("WyÅ›cig skoÅ„czony");
                 isRacing = false;
             }
         }
+    }
+
+    public void LoadScene(int sceneIndex)
+    {
+        SceneManager.LoadScene(sceneIndex);
     }
 }
