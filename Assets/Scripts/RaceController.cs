@@ -18,6 +18,10 @@ public class RaceController : MonoBehaviour
 
     public CheckpointController[] carsControllers;
 
+    public GameObject carPrefab;
+    public Transform[] spawnPositions;
+    public int playerCount;
+
     void CountDown()
     {
         Debug.Log("Rozpoczynam odlicanie");
@@ -56,6 +60,20 @@ public class RaceController : MonoBehaviour
         startText.gameObject.SetActive(false);
 
         InvokeRepeating("CountDown", 3, 1);
+
+        for (int i = 0; i < playerCount; i++)
+        {
+            GameObject car = Instantiate(carPrefab);
+            car.transform.position = spawnPositions[i].position;
+            car.transform.rotation = spawnPositions[i].rotation;
+            car.GetComponent<CarAppearance>().playerNumber = i;
+
+            if (i == 0)
+            {
+                car.GetComponent<PlayerController>().enabled = true;
+            }
+        }
+
 
         GameObject[] cars = GameObject.FindGameObjectsWithTag("Car");
         carsControllers = new CheckpointController[cars.Length];
