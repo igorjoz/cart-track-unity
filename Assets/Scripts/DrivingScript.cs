@@ -12,6 +12,7 @@ public class DrivingScript : MonoBehaviour
     public Rigidbody rb;
 
     public float currentSpeed;
+    public Transform cameraTarget;
 
     public void Drive(float accel, float brake, float steer)
     {
