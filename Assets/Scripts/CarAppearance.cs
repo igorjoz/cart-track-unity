@@ -7,6 +7,7 @@ public class CarAppearance : MonoBehaviour
     public Color carColor;
     public TMP_Text nameText;
     public Renderer carRenderer;
+    public int playerNumber;
 
     void Start()
     {
