@@ -1,31 +1,78 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using TMPro;
+using UnityEngine.UI;
+using Photon.Pun;
+using Photon.Realtime;
 
-public class RaceLauncher : MonoBehaviour
+public class RaceLauncher : MonoBehaviourPunCallbacks
 {
-    [Header("Assign your TMP Input Field here")]
-    public TMP_InputField playerNameField;
+    [SerializeField] private byte maxPlayersPerRoom = 3;
+    private bool isConnecting;
+    [SerializeField] private Text networkText;
+    [SerializeField] private InputField playerNameInput;
+    private const string gameVersion = "2.50"; // dopasuj do wersji konsoli/AppVersion
 
-    void Start()
+    void Awake()
     {
+        PhotonNetwork.AutomaticallySyncScene = true;
+        // Ustaw domyœln¹ wersjê gry w PhotonServerSettings:
+        PhotonNetwork.PhotonServerSettings.AppSettings.AppVersion = gameVersion;
         if (PlayerPrefs.HasKey("PlayerName"))
-            playerNameField.text = PlayerPrefs.GetString("PlayerName");
+        {
+            playerNameInput.text = PlayerPrefs.GetString("PlayerName");
+            PhotonNetwork.NickName = playerNameInput.text;
+        }
     }
 
-    /// <summary>
-    /// Hook this up to the OnValueChanged(string) event of your TMP Input Field.
-    /// </summary>
     public void SetName(string name)
     {
         PlayerPrefs.SetString("PlayerName", name);
+        PhotonNetwork.NickName = name;
     }
 
-    /// <summary>
-    /// Call this (e.g. from a button) to load the race scene.
-    /// </summary>
-    public void StartTrial()
+    public void ConnectNetwork()
     {
-        SceneManager.LoadScene(0);
+        networkText.text = "";
+        isConnecting = true;
+        PhotonNetwork.NickName = playerNameInput.text;
+
+        if (PhotonNetwork.IsConnected)
+        {
+            networkText.text += "Joining Room...\n";
+            PhotonNetwork.JoinRandomRoom();
+        }
+        else
+        {
+            networkText.text += "Connecting...\n";
+            // wersja gry ju¿ ustawiona w Awake, wiêc nie przekazujemy parametru
+            PhotonNetwork.ConnectUsingSettings();
+        }
+    }
+
+    public override void OnConnectedToMaster()
+    {
+        if (isConnecting)
+        {
+            networkText.text += "OnConnectedToMaster...\n";
+            PhotonNetwork.JoinRandomRoom();
+        }
+    }
+
+    public override void OnJoinRandomFailed(short returnCode, string message)
+    {
+        networkText.text += "Failed to join random room.\n";
+        PhotonNetwork.CreateRoom(null, new RoomOptions { MaxPlayers = maxPlayersPerRoom });
+    }
+
+    public override void OnDisconnected(DisconnectCause cause)
+    {
+        networkText.text += $"Disconnected: {cause}\n";
+        isConnecting = false;
+    }
+
+    public override void OnJoinedRoom()
+    {
+        networkText.text = $"Joined Room with {PhotonNetwork.CurrentRoom.PlayerCount} players.\n";
+        PhotonNetwork.LoadLevel("KartTest"); // nazwê sceny dostosuj do swojego projektu
     }
 }

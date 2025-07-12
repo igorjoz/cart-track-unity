@@ -1,112 +1,123 @@
-using System.ComponentModel;
-using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using Photon.Pun;
+using Photon.Realtime;
 
-public class RaceController : MonoBehaviour
+public class RaceController : MonoBehaviourPunCallbacks
 {
-    public int timer = 8;
-    public static int totalLaps = 2;
-    public static bool isRacing = false;
-    public GameObject endRacePanel;
+    public CheckPointController[] carsController;
+    public static bool racing = false;
+    public static int totalLaps = 1;
+    public int timer = 3;
 
-    public TMP_Text startText;
-    AudioSource audioSource;
-    public AudioClip countSound;
-    public AudioClip startSound;
+    [SerializeField] private Text startText;
+    [SerializeField] private AudioClip countClip;
+    [SerializeField] private AudioClip startClip;
+    [SerializeField] private GameObject endPanel;
+    [SerializeField] private GameObject carPrefab;
+    [SerializeField] private Transform[] spawnPos;
+    [SerializeField] private GameObject startButton;
+    [SerializeField] private GameObject waitingText;
+    [SerializeField] private RawImage mirror;
 
-    public CheckpointController[] carsControllers;
+    private AudioSource audioSource;
+    private int playerCount;
 
-    public GameObject carPrefab;
-    public Transform[] spawnPositions;
-    public int playerCount;
+    void Start()
+    {
+        playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
+        endPanel.SetActive(false);
+        audioSource = GetComponent<AudioSource>();
+        startText.gameObject.SetActive(false);
+        startButton.SetActive(false);
+        waitingText.SetActive(false);
+
+        int idx = PhotonNetwork.CurrentRoom.PlayerCount - 1;
+        Vector3 pos = spawnPos[idx].position;
+        Quaternion rot = spawnPos[idx].rotation;
+
+        object[] instData = {
+            PlayerPrefs.GetString("PlayerName"),
+            PlayerPrefs.GetInt("Red"),
+            PlayerPrefs.GetInt("Green"),
+            PlayerPrefs.GetInt("Blue")
+        };
+
+        GameObject playerCar = PhotonNetwork.Instantiate(
+            carPrefab.name, pos, rot, 0, instData
+        );
+        playerCar.GetComponent<CarAppearance>().SetLocalPlayer();
+
+        if (PhotonNetwork.IsMasterClient)
+            startButton.SetActive(true);
+        else
+            waitingText.SetActive(true);
+
+        playerCar.GetComponent<DrivingScript>().enabled = true;
+        playerCar.GetComponent<PlayerController>().enabled = true;
+    }
+
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        // opcjonalnie: aktualizuj UI, jeżeli potrzebujesz
+    }
+
+    void LateUpdate()
+    {
+        int finished = 0;
+        foreach (var ctrl in carsController)
+            if (ctrl.lap == totalLaps + 1) finished++;
+
+        if (finished == carsController.Length && racing)
+        {
+            endPanel.SetActive(true);
+            racing = false;
+        }
+    }
 
     void CountDown()
     {
-        Debug.Log("Rozpoczynam odlicanie");
         startText.gameObject.SetActive(true);
-
         if (timer > 0)
         {
             startText.text = timer.ToString();
-            audioSource.PlayOneShot(countSound);
-
-            Debug.Log("Rozpocz�cie wy�cigu za: " + timer);
+            audioSource.PlayOneShot(countClip);
             timer--;
         }
         else
         {
-            startText.text = "START!";
-            audioSource.PlayOneShot(startSound);
-
-            Debug.Log("Start!");
-            isRacing = true;
-            CancelInvoke("CountDown");
-            Invoke("HideStartText", 1);
+            startText.text = "START!!!";
+            audioSource.PlayOneShot(startClip);
+            racing = true;
+            CancelInvoke(nameof(CountDown));
+            Invoke(nameof(HideStartText), 1f);
         }
     }
 
-    void HideStartText()
+    void HideStartText() => startText.gameObject.SetActive(false);
+
+    public void BeginGame()
     {
-        startText.gameObject.SetActive(false);
+        if (PhotonNetwork.IsMasterClient)
+            photonView.RPC(nameof(StartGame), RpcTarget.All);
     }
 
-    void Start()
+    [PunRPC]
+    public void StartGame()
     {
-        endRacePanel.SetActive(false);
+        InvokeRepeating(nameof(CountDown), 3f, 1f);
+        startButton.SetActive(false);
+        waitingText.SetActive(false);
 
-        audioSource = GetComponent<AudioSource>();
-        startText.gameObject.SetActive(false);
-
-        InvokeRepeating("CountDown", 3, 1);
-
-        for (int i = 0; i < playerCount; i++)
-        {
-            GameObject car = Instantiate(carPrefab);
-            car.transform.position = spawnPositions[i].position;
-            car.transform.rotation = spawnPositions[i].rotation;
-            car.GetComponent<CarAppearance>().playerNumber = i;
-
-            if (i == 0)
-            {
-                car.GetComponent<PlayerController>().enabled = true;
-            }
-        }
-
-
-        GameObject[] cars = GameObject.FindGameObjectsWithTag("Car");
-        carsControllers = new CheckpointController[cars.Length];
-
+        var cars = GameObject.FindGameObjectsWithTag("Car");
+        carsController = new CheckPointController[cars.Length];
         for (int i = 0; i < cars.Length; i++)
-        {
-            carsControllers[i] = cars[i].GetComponent<CheckpointController>();
-        }
+            carsController[i] = cars[i].GetComponent<CheckPointController>();
     }
 
-    private void LateUpdate()
+    public void SetMirror(Camera backCam)
     {
-        int finishedLap = 0;
-
-        foreach (CheckpointController controller in carsControllers)
-        {
-            if (controller.lap == totalLaps + 1)
-            {
-                finishedLap++;
-            }
-
-            if (finishedLap == carsControllers.Length && isRacing)
-            {
-                endRacePanel.SetActive(true);
-
-                Debug.Log("Wyścig skończony");
-                isRacing = false;
-            }
-        }
-    }
-
-    public void LoadScene(int sceneIndex)
-    {
-        SceneManager.LoadScene(sceneIndex);
+        mirror.texture = backCam.targetTexture;
     }
 }
