@@ -13,6 +13,9 @@ public class DrivingScript : MonoBehaviour
 
     public float currentSpeed;
 
+    [Tooltip("Empty child transform used as LookAt for the camera")]
+    public Transform cameraTarget;                  // do LookAt
+
     public void Drive(float accel, float brake, float steer)
     {
         accel = Mathf.Clamp(accel, -1, 1);

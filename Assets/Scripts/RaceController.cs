@@ -41,6 +41,12 @@ public class RaceController : MonoBehaviourPunCallbacks
 
         // Synchronizuj scenę automatycznie przez Photona
         PhotonNetwork.AutomaticallySyncScene = true;
+
+        if (PhotonNetwork.InRoom)
+        {
+            SpawnLocalCar();
+            SetupStartUI();
+        }
     }
 
     void Start()
@@ -158,6 +164,12 @@ public class RaceController : MonoBehaviourPunCallbacks
         // Włącz lokalne sterowanie
         car.GetComponent<DrivingScript>().enabled = true;
         car.GetComponent<PlayerController>().enabled = true;
+
+        var camCtrl = FindObjectOfType<CameraController>();
+        if (camCtrl != null)
+        {
+            camCtrl.SetCameraProperties(car);
+        }
 
         return car;
     }
