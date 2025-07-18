@@ -1,38 +1,112 @@
-using System.ComponentModel;
-using TMPro;
-using Unity.VisualScripting;
+// RaceController.cs
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using TMPro;
+using Photon.Pun;
+using Photon.Realtime;
 
-public class RaceController : MonoBehaviour
+public class RaceController : MonoBehaviourPunCallbacks
 {
-    public int timer = 8;
+    [Header("Race Settings")]
+    public int countdownStart = 3;
     public static int totalLaps = 2;
     public static bool isRacing = false;
-    public GameObject endRacePanel;
 
+    [Header("UI Elements")]
+    public GameObject endRacePanel;
     public TMP_Text startText;
-    AudioSource audioSource;
+    public Button startButton;
+    public GameObject waitingText;
+
+    [Header("Car Prefab & Spawns")]
+    public GameObject carPrefab;      // musi leżeć w Resources/
+    public Transform[] spawnPositions;
+
+    [Header("Audio Clips")]
     public AudioClip countSound;
     public AudioClip startSound;
 
-    public CheckpointController[] carsControllers;
+    private AudioSource audioSource;
+    private int timer;
+    private CheckpointController[] carsControllers;
 
-    public GameObject carPrefab;
-    public Transform[] spawnPositions;
-    public int playerCount;
-
-    void CountDown()
+    void Awake()
     {
-        Debug.Log("Rozpoczynam odlicanie");
+        // Wstępna konfiguracja UI i audio
+        audioSource = GetComponent<AudioSource>();
+        endRacePanel.SetActive(false);
+        startText.gameObject.SetActive(false);
+        startButton.gameObject.SetActive(false);
+        waitingText.SetActive(false);
+
+        // Synchronizuj scenę automatycznie przez Photona
+        PhotonNetwork.AutomaticallySyncScene = true;
+    }
+
+    void Start()
+    {
+        timer = countdownStart;
+
+        // Jeśli klient jest już w pokoju (np. szybkie dołączenie),
+        // od razu spawn i konfiguruj UI
+        if (PhotonNetwork.InRoom)
+        {
+            SpawnLocalCar();
+            SetupStartUI();
+        }
+    }
+
+    public override void OnJoinedRoom()
+    {
+        base.OnJoinedRoom();
+        // Gdy callback potwierdzi dołączenie: stwórz auto i przygotuj UI
+        SpawnLocalCar();
+        SetupStartUI();
+    }
+
+    /// <summary>
+    /// Wyświetla MasterClientowi przycisk Start, innym – komunikat "Czekaj na start".
+    /// </summary>
+    private void SetupStartUI()
+    {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            startButton.gameObject.SetActive(true);
+            startButton.onClick.AddListener(BeginGame);
+        }
+        else
+        {
+            waitingText.SetActive(true);
+        }
+    }
+
+    /// <summary>
+    /// Wywoływane przez MasterClienta – RPC do wszystkich o starcie wyścigu.
+    /// </summary>
+    public void BeginGame()
+    {
+        photonView.RPC(nameof(StartGame), RpcTarget.All);
+    }
+
+    [PunRPC]
+    private void StartGame()
+    {
+        // Schowaj UI startowe
+        waitingText.SetActive(false);
+        startButton.gameObject.SetActive(false);
+
+        // Rozpocznij odliczanie
+        InvokeRepeating(nameof(CountDown), 1f, 1f);
+    }
+
+    private void CountDown()
+    {
         startText.gameObject.SetActive(true);
 
         if (timer > 0)
         {
             startText.text = timer.ToString();
             audioSource.PlayOneShot(countSound);
-
-            Debug.Log("Rozpocz�cie wy�cigu za: " + timer);
             timer--;
         }
         else
@@ -40,73 +114,84 @@ public class RaceController : MonoBehaviour
             startText.text = "START!";
             audioSource.PlayOneShot(startSound);
 
-            Debug.Log("Start!");
             isRacing = true;
-            CancelInvoke("CountDown");
-            Invoke("HideStartText", 1);
+            CancelInvoke(nameof(CountDown));
+            Invoke(nameof(HideStartText), 1f);
+
+            // Po starcie zbierz wszystkie CheckpointController’y
+            SetupCheckpointControllers();
         }
     }
 
-    void HideStartText()
+    private void HideStartText()
     {
         startText.gameObject.SetActive(false);
     }
 
-    void Start()
+    /// <summary>
+    /// Tworzy samochód lokalnego gracza dopiero po wejściu do pokoju.
+    /// </summary>
+    private GameObject SpawnLocalCar()
     {
-        endRacePanel.SetActive(false);
+        // ActorNumber zaczyna się od 1, więc idx = ActorNumber-1
+        int idx = PhotonNetwork.LocalPlayer.ActorNumber - 1;
+        Vector3 pos = spawnPositions[idx].position;
+        Quaternion rot = spawnPositions[idx].rotation;
 
-        audioSource = GetComponent<AudioSource>();
-        startText.gameObject.SetActive(false);
-
-        InvokeRepeating("CountDown", 3, 1);
-
-        for (int i = 0; i < playerCount; i++)
+        // Dane do CarAppearance lub OnlinePlayer
+        object[] instData = new object[]
         {
-            GameObject car = Instantiate(carPrefab);
-            car.transform.position = spawnPositions[i].position;
-            car.transform.rotation = spawnPositions[i].rotation;
-            car.GetComponent<CarAppearance>().playerNumber = i;
+            PlayerPrefs.GetString("PlayerName"),
+            PlayerPrefs.GetInt("Red"),
+            PlayerPrefs.GetInt("Green"),
+            PlayerPrefs.GetInt("Blue")
+        };
 
-            if (i == 0)
-            {
-                car.GetComponent<PlayerController>().enabled = true;
-            }
-        }
+        // Instantiate z Photonem – wysyła do wszystkich event
+        GameObject car = PhotonNetwork.Instantiate(
+            carPrefab.name,
+            pos, rot,
+            0,
+            instData
+        );
 
+        // Włącz lokalne sterowanie
+        car.GetComponent<DrivingScript>().enabled = true;
+        car.GetComponent<PlayerController>().enabled = true;
 
-        GameObject[] cars = GameObject.FindGameObjectsWithTag("Car");
+        return car;
+    }
+
+    /// <summary>
+    /// Zbiera wszystkie CheckpointController’y z tagiem "Car" do sprawdzania mety.
+    /// </summary>
+    private void SetupCheckpointControllers()
+    {
+        var cars = GameObject.FindGameObjectsWithTag("Car");
         carsControllers = new CheckpointController[cars.Length];
-
         for (int i = 0; i < cars.Length; i++)
         {
             carsControllers[i] = cars[i].GetComponent<CheckpointController>();
         }
     }
 
-    private void LateUpdate()
+    void LateUpdate()
     {
-        int finishedLap = 0;
+        // Jeśli wyścig trwa i mamy kontrolery – sprawdzamy, czy wszyscy ukończyli
+        if (!isRacing || carsControllers == null) return;
 
-        foreach (CheckpointController controller in carsControllers)
+        int finished = 0;
+        foreach (var ctrl in carsControllers)
         {
-            if (controller.lap == totalLaps + 1)
-            {
-                finishedLap++;
-            }
-
-            if (finishedLap == carsControllers.Length && isRacing)
-            {
-                endRacePanel.SetActive(true);
-
-                Debug.Log("Wyścig skończony");
-                isRacing = false;
-            }
+            if (ctrl.lap > totalLaps)
+                finished++;
         }
-    }
 
-    public void LoadScene(int sceneIndex)
-    {
-        SceneManager.LoadScene(sceneIndex);
+        if (finished == carsControllers.Length)
+        {
+            isRacing = false;
+            endRacePanel.SetActive(true);
+            Debug.Log("Wyścig skończony");
+        }
     }
 }

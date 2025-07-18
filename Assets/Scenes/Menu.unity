@@ -1194,6 +1194,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerNameField: {fileID: 1599323487}
+  networkText: {fileID: 1837938241}
+  maxPlayersPerRoom: 3
 --- !u!1 &591257220
 GameObject:
   m_ObjectHideFlags: 0
@@ -1404,7 +1406,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 514234155}
         m_TargetAssemblyTypeName: RaceLauncher, Assembly-CSharp
-        m_MethodName: StartGame
+        m_MethodName: ConnectNetwork
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2389,7 +2391,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1220325469}
   - component: {fileID: 1220325468}
-  - component: {fileID: 1220325467}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -2397,14 +2398,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &1220325467
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1220325466}
-  m_Enabled: 1
 --- !u!20 &1220325468
 Camera:
   m_ObjectHideFlags: 0
