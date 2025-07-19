@@ -7,6 +7,18 @@ public class OnlinePlayer : MonoBehaviourPunCallbacks
 
     private void Awake()
     {
+        if (photonView.IsMine)
+        {
+            LocalPlayerInstance = gameObject;
+        }
+        else
+        {
+            ApplyRemoteData();
+        }
+    }
+
+    private void ApplyRemoteData()
+    {
         
     }
 }
