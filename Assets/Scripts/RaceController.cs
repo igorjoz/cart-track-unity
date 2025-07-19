@@ -73,7 +73,7 @@ public class RaceController : MonoBehaviourPunCallbacks
     public override void OnMasterClientSwitched(Player newMasterClient)
     {
         base.OnMasterClientSwitched(newMasterClient);
-        
+
         // Jeśli to MY zostałem nowym hostem, przypnij kamerę do mojego auta
         if (PhotonNetwork.IsMasterClient)
         {
