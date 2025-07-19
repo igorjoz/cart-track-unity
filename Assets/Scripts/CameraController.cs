@@ -1,13 +1,13 @@
-using Unity.Cinemachine; // upewnij siê, ¿e masz tê using
+using Unity.Cinemachine; // upewnij siï¿½, ï¿½e masz tï¿½ using
 using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    [Header("Przesuniêcia kamery (np. front, top-down itd.)")]
+    [Header("Przesuniï¿½cia kamery (np. front, top-down itd.)")]
     public Vector3[] positions;
 
     [Header("Twoja Cinemachine Virtual Camera")]
-    public CinemachineVirtualCamera cam;  // przywróæ ten typ
+    public CinemachineCamera cam;  // zaktualizowany typ
 
     int activePosition = 0;
 
@@ -15,8 +15,9 @@ public class CameraController : MonoBehaviour
     {
         if (positions.Length > 0)
         {
-            var t = cam.GetCinemachineComponent<CinemachineTransposer>();
-            t.m_FollowOffset = positions[0];
+            var follow = cam.GetComponent<CinemachineFollow>();
+            if (follow != null)
+                follow.FollowOffset = positions[0];
         }
     }
 
@@ -25,8 +26,9 @@ public class CameraController : MonoBehaviour
         if (positions.Length > 0 && Input.GetKeyDown(KeyCode.T))
         {
             activePosition = (activePosition + 1) % positions.Length;
-            var t = cam.GetCinemachineComponent<CinemachineTransposer>();
-            t.m_FollowOffset = positions[activePosition];
+            var follow = cam.GetComponent<CinemachineFollow>();
+            if (follow != null)
+                follow.FollowOffset = positions[activePosition];
         }
     }
 

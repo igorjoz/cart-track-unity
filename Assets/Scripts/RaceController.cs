@@ -55,11 +55,11 @@ public class RaceController : MonoBehaviourPunCallbacks
 
         // Jeśli klient jest już w pokoju (np. szybkie dołączenie),
         // od razu spawn i konfiguruj UI
-        if (PhotonNetwork.InRoom)
-        {
-            SpawnLocalCar();
-            SetupStartUI();
-        }
+        //if (PhotonNetwork.InRoom)
+        //{
+        //    SpawnLocalCar();
+        //    SetupStartUI();
+        //}
     }
 
     public override void OnJoinedRoom()
@@ -68,6 +68,43 @@ public class RaceController : MonoBehaviourPunCallbacks
         // Gdy callback potwierdzi dołączenie: stwórz auto i przygotuj UI
         SpawnLocalCar();
         SetupStartUI();
+    }
+
+    public override void OnMasterClientSwitched(Player newMasterClient)
+    {
+        base.OnMasterClientSwitched(newMasterClient);
+        
+        // Jeśli to MY zostałem nowym hostem, przypnij kamerę do mojego auta
+        if (PhotonNetwork.IsMasterClient)
+        {
+            var camCtrl = FindFirstObjectByType<CameraController>();
+            if (camCtrl != null)
+            {
+                // Znajdź moje auto i przypnij do niego kamerę
+                var myCar = FindMyLocalCar();
+                if (myCar != null)
+                {
+                    camCtrl.SetCameraProperties(myCar);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Znajduje auto lokalnego gracza (które należy do tego klienta)
+    /// </summary>
+    private GameObject FindMyLocalCar()
+    {
+        var cars = GameObject.FindGameObjectsWithTag("Car");
+        foreach (var car in cars)
+        {
+            var photonView = car.GetComponent<PhotonView>();
+            if (photonView != null && photonView.IsMine)
+            {
+                return car;
+            }
+        }
+        return null;
     }
 
     /// <summary>
@@ -165,10 +202,14 @@ public class RaceController : MonoBehaviourPunCallbacks
         car.GetComponent<DrivingScript>().enabled = true;
         car.GetComponent<PlayerController>().enabled = true;
 
-        var camCtrl = FindObjectOfType<CameraController>();
-        if (camCtrl != null)
+        // Kamera podąża tylko za hostem (MasterClient)
+        if (PhotonNetwork.IsMasterClient)
         {
-            camCtrl.SetCameraProperties(car);
+            var camCtrl = FindFirstObjectByType<CameraController>();
+            if (camCtrl != null)
+            {
+                camCtrl.SetCameraProperties(car);
+            }
         }
 
         return car;

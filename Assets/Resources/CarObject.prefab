@@ -1128,6 +1128,7 @@ MonoBehaviour:
   maxSpeed: 200
   rb: {fileID: 8231348005708871967}
   currentSpeed: 0
+  cameraTarget: {fileID: 0}
 --- !u!114 &4190551346044402112
 MonoBehaviour:
   m_ObjectHideFlags: 0
