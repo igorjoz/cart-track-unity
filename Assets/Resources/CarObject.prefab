@@ -1630,6 +1630,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9951465eba9ea80418e3928a17590914, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nameText: {fileID: 5396597972763087040}
+  carRenderer: {fileID: 31389049799448231}
 --- !u!114 &2160339126676446032
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1649,6 +1651,7 @@ MonoBehaviour:
   OwnershipTransfer: 0
   observableSearch: 2
   ObservedComponents:
+  - {fileID: 6967458933870754081}
   - {fileID: 3756130542694053511}
   sceneViewId: 0
   InstantiationId: 0

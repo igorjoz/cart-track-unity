@@ -127,22 +127,29 @@ public class RaceController : MonoBehaviourPunCallbacks
         waitingText.SetActive(false);
         startButton.gameObject.SetActive(false);
 
-        // Rozpocznij odliczanie
-        InvokeRepeating(nameof(CountDown), 1f, 1f);
+        // Reset timer to countdown start value + 1, żeby pierwsze wywołanie wyświetliło właściwą liczbę
+        timer = countdownStart + 1;
+
+        // Rozpocznij odliczanie od razu
+        InvokeRepeating(nameof(CountDown), 0f, 1f);
     }
 
     private void CountDown()
     {
         startText.gameObject.SetActive(true);
+        
+        // Najpierw zmniejsz timer
+        timer--;
 
         if (timer > 0)
         {
+            // Wyświetl aktualną liczbę
             startText.text = timer.ToString();
             audioSource.PlayOneShot(countSound);
-            timer--;
         }
         else
         {
+            // Timer dotarł do 0 - wyświetl START
             startText.text = "START!";
             audioSource.PlayOneShot(startSound);
 
@@ -173,10 +180,10 @@ public class RaceController : MonoBehaviourPunCallbacks
         // Dane do CarAppearance lub OnlinePlayer
         object[] instData = new object[]
         {
-            PlayerPrefs.GetString("PlayerName"),
-            PlayerPrefs.GetInt("Red"),
-            PlayerPrefs.GetInt("Green"),
-            PlayerPrefs.GetInt("Blue")
+            PlayerPrefs.GetString("PlayerName", "Player " + PhotonNetwork.LocalPlayer.ActorNumber),
+            PlayerPrefs.GetInt("Red", 255),
+            PlayerPrefs.GetInt("Green", 0),
+            PlayerPrefs.GetInt("Blue", 0)
         };
 
         // Instantiate z Photonem – wysyła do wszystkich event
