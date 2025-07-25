@@ -1587,6 +1587,7 @@ MonoBehaviour:
   maxBrakeTorque: 500
   maxSpeed: 200
   rb: {fileID: 2971173609161015688}
+  cameraTarget: {fileID: 0}
   currentSpeed: 0
 --- !u!114 &3870428550174291541
 MonoBehaviour:

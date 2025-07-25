@@ -4,12 +4,13 @@ using UnityEngine;
 
 public class DrivingScript : MonoBehaviour
 {
-    public WheelScript[] wheels; 
-    public float torque = 200; 
-    public float maxSteerAngle = 30; 
-    public float maxBrakeTorque = 500; 
-    public float maxSpeed = 150; 
+    public WheelScript[] wheels;
+    public float torque = 200;
+    public float maxSteerAngle = 30;
+    public float maxBrakeTorque = 500;
+    public float maxSpeed = 150;
     public Rigidbody rb;
+    public GameObject cameraTarget;
 
     public float currentSpeed;
 
