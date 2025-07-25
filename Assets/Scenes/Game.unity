@@ -2567,7 +2567,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f3bb5a21d3e3774f84752046ddc5827, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  positions: []
+  positions:
+  - {x: 0, y: 6, z: -10}
+  - {x: 0, y: 0.5, z: 0.6}
   cam: {fileID: 947909677}
   followTarget: {fileID: 0}
   lookAtTarget: {fileID: 0}
