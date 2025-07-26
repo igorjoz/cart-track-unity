@@ -137,7 +137,7 @@ public class RaceController : MonoBehaviourPunCallbacks
     private void CountDown()
     {
         startText.gameObject.SetActive(true);
-        
+
         // Najpierw zmniejsz timer
         timer--;
 

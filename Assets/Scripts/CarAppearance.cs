@@ -10,8 +10,19 @@ public class CarAppearance : MonoBehaviour
     public Renderer carRenderer;
     public int playerNumber;
 
+
+    int carRego;
+    bool regoSet = false;
+    public CheckpointController checkpoint;
+
     void Start()
     {
+        // Automatycznie znajdź CheckpointController na tym samym obiekcie
+        if (checkpoint == null)
+        {
+            checkpoint = GetComponent<CheckpointController>();
+        }
+
         // Jeśli to jest gra sieciowa, OnlinePlayer zajmie się wyglądem
         if (PhotonNetwork.IsConnected && GetComponent<PhotonView>() != null)
         {
@@ -33,5 +44,27 @@ public class CarAppearance : MonoBehaviour
         nameText.text = playerName;
         carRenderer.material.color = carColor;
         nameText.color = carColor;
+    }
+
+    private void LateUpdate()
+    {
+        // Only handle leaderboard in local/single player mode
+        if (PhotonNetwork.IsConnected && GetComponent<PhotonView>() != null)
+        {
+            return; // Skip leaderboard updates in multiplayer - should be handled elsewhere
+        }
+
+        if (!regoSet)
+        {
+            carRego = Leaderboard.RegisterCar(playerName);
+            regoSet = true;
+            return;
+        }
+
+        // Sprawdź czy checkpoint jest przypisany przed użyciem
+        if (checkpoint != null)
+        {
+            Leaderboard.SetPosition(carRego, checkpoint.lap, checkpoint.checkpoint);
+        }
     }
 }

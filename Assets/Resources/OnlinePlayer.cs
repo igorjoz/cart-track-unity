@@ -10,6 +10,10 @@ public class OnlinePlayer : MonoBehaviourPunCallbacks, IPunObservable
     public TMP_Text nameText;
     public Renderer carRenderer;
 
+    private int carRego;
+    private bool regoSet = false;
+    private CheckpointController checkpoint;
+
     private void Awake()
     {
         if (photonView.IsMine)
@@ -20,15 +24,39 @@ public class OnlinePlayer : MonoBehaviourPunCallbacks, IPunObservable
 
     private void Start()
     {
+        // Automatycznie znajdź CheckpointController na tym obiekcie lub dzieciach
+        checkpoint = GetComponent<CheckpointController>();
+        if (checkpoint == null)
+        {
+            checkpoint = GetComponentInChildren<CheckpointController>();
+        }
+
         // Zastosuj dane z instantiation - robione w Start() żeby mieć pewność że wszystko jest zainicjalizowane
         ApplyInstantiationData();
+    }
+
+    private void LateUpdate()
+    {
+        // Handle leaderboard registration and updates for multiplayer
+        if (!regoSet && nameText != null && !string.IsNullOrEmpty(nameText.text))
+        {
+            carRego = Leaderboard.RegisterCar(nameText.text);
+            regoSet = true;
+            return;
+        }
+
+        // Update leaderboard position
+        if (checkpoint != null && regoSet)
+        {
+            Leaderboard.SetPosition(carRego, checkpoint.lap, checkpoint.checkpoint);
+        }
     }
 
     private void ApplyInstantiationData()
     {
         // Pobierz dane z instantiation data
         object[] data = photonView.InstantiationData;
-        
+
         if (data != null && data.Length >= 4)
         {
             string playerName = (string)data[0];
@@ -54,7 +82,7 @@ public class OnlinePlayer : MonoBehaviourPunCallbacks, IPunObservable
         {
             Color carColor = ColorCar.IntToColor(red, green, blue);
             carRenderer.material.color = carColor;
-            
+
             // Ustaw również kolor tekstu na kolor samochodu
             if (nameText != null)
             {
