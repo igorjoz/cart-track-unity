@@ -66,18 +66,15 @@ public class RaceController : MonoBehaviourPunCallbacks
     {
         base.OnMasterClientSwitched(newMasterClient);
 
-        // Jeśli to MY zostałem nowym hostem, przypnij kamerę do mojego auta
-        if (PhotonNetwork.IsMasterClient)
+        var camCtrl = FindFirstObjectByType<CameraController>();
+
+        if (camCtrl != null)
         {
-            var camCtrl = FindFirstObjectByType<CameraController>();
-            if (camCtrl != null)
+            // Znajdź moje auto i przypnij do niego kamerę
+            var myCar = FindMyLocalCar();
+            if (myCar != null)
             {
-                // Znajdź moje auto i przypnij do niego kamerę
-                var myCar = FindMyLocalCar();
-                if (myCar != null)
-                {
-                    camCtrl.SetCameraProperties(myCar);
-                }
+                camCtrl.SetCameraProperties(myCar);
             }
         }
     }
@@ -195,13 +192,10 @@ public class RaceController : MonoBehaviourPunCallbacks
         car.GetComponent<PlayerController>().enabled = true;
 
         // Kamera podąża tylko za hostem (MasterClient)
-        if (PhotonNetwork.IsMasterClient)
+        var camCtrl = FindFirstObjectByType<CameraController>();
+        if (camCtrl != null)
         {
-            var camCtrl = FindFirstObjectByType<CameraController>();
-            if (camCtrl != null)
-            {
-                camCtrl.SetCameraProperties(car);
-            }
+            camCtrl.SetCameraProperties(car);
         }
 
         return car;
